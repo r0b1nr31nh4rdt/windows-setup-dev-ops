@@ -8,7 +8,7 @@
     Aktualisiert sich automatisch von GitHub vor der Ausfuehrung.
 .NOTES
     Einmaliger Start (als Administrator):
-    Set-ExecutionPolicy Bypass -Scope Process -Force; Invoke-WebRequest -Uri "https://raw.githubusercontent.com/DEIN-USER/DEIN-REPO/main/setup-windows.ps1" -UseBasicParsing | Invoke-Expression
+    Set-ExecutionPolicy Bypass -Scope Process -Force; Invoke-WebRequest -Uri "https://raw.githubusercontent.com/r0b1nr31nh4rdt/windows-setup-dev-ops/main/setup-windows.ps1" -UseBasicParsing | Invoke-Expression
 #>
 
 Set-StrictMode -Version Latest
@@ -17,12 +17,12 @@ $ErrorActionPreference = "Stop"
 # ---------------------------------------------------------------------------
 # SELBST-UPDATE VON GITHUB
 # ---------------------------------------------------------------------------
-
-# HIER deine GitHub-URL eintragen:
 $GITHUB_RAW_URL = "https://raw.githubusercontent.com/r0b1nr31nh4rdt/windows-setup-dev-ops/main/setup-windows.ps1"
 
 # Nur updaten wenn das Skript als Datei ausgefuehrt wird (nicht via Invoke-Expression)
-if ($MyInvocation.MyCommand.Path) {
+$scriptPath = $MyInvocation.MyCommand.Path
+
+if ($scriptPath) {
     Write-Host ""
     Write-Host "  [UPDATE] Pruefe auf neue Version von GitHub ..." -ForegroundColor Cyan
 
