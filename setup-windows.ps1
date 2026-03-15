@@ -11,32 +11,38 @@
     Set-ExecutionPolicy Bypass -Scope Process -Force; Invoke-WebRequest -Uri "https://raw.githubusercontent.com/r0b1nr31nh4rdt/windows-setup-dev-ops/main/setup-windows.ps1" -UseBasicParsing | Invoke-Expression
 #>
 
-Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 # ---------------------------------------------------------------------------
 # SELBST-UPDATE VON GITHUB
 # ---------------------------------------------------------------------------
+
 $GITHUB_RAW_URL = "https://raw.githubusercontent.com/r0b1nr31nh4rdt/windows-setup-dev-ops/main/setup-windows.ps1"
 
-# Nur updaten wenn das Skript als Datei ausgefuehrt wird (nicht via Invoke-Expression)
+# ---------------------------------------------------------------------------
+# Pruefe ob Skript als Datei oder via Invoke-Expression ausgefuehrt wird
 $scriptPath = $MyInvocation.MyCommand.Path
 
 if ($scriptPath) {
+    # Als Datei ausgefuehrt -> Self-Update moeglich
     Write-Host ""
     Write-Host "  [UPDATE] Pruefe auf neue Version von GitHub ..." -ForegroundColor Cyan
 
     try {
-        $remoteScript = (Invoke-WebRequest -Uri $GITHUB_RAW_URL -UseBasicParsing -TimeoutSec 10).Content
-        $localScript  = Get-Content -Path $MyInvocation.MyCommand.Path -Raw
+        $headers = @{}
+        if ($GITHUB_TOKEN -ne "OPTIONAL") {
+            $headers["Authorization"] = "token $GITHUB_TOKEN"
+        }
+
+        $remoteScript = (Invoke-WebRequest -Uri $GITHUB_RAW_URL -UseBasicParsing -TimeoutSec 10 -Headers $headers).Content
+        $localScript  = Get-Content -Path $scriptPath -Raw
 
         if ($remoteScript -ne $localScript) {
             Write-Host "  [UPDATE] Neue Version gefunden - aktualisiere Skript ..." -ForegroundColor Yellow
-            Set-Content -Path $MyInvocation.MyCommand.Path -Value $remoteScript -Encoding UTF8
+            Set-Content -Path $scriptPath -Value $remoteScript -Encoding UTF8
             Write-Host "  [UPDATE] Skript aktualisiert - starte neu ..." -ForegroundColor Green
             Write-Host ""
-            # Neu starten mit aktualisierter Version
-            & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $MyInvocation.MyCommand.Path
+            & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $scriptPath
             exit
         } else {
             Write-Host "  [UPDATE] Bereits aktuell." -ForegroundColor Green
@@ -44,7 +50,31 @@ if ($scriptPath) {
     } catch {
         Write-Host "  [UPDATE] GitHub nicht erreichbar - fahre mit lokaler Version fort." -ForegroundColor Magenta
     }
+} else {
+    # Via Invoke-Expression gestartet -> Skript herunterladen und als Datei ausfuehren
+    Write-Host ""
+    Write-Host "  [SETUP] Lade Skript herunter ..." -ForegroundColor Cyan
+
+    $tempScript = "$env:TEMP\setup-windows.ps1"
+
+    try {
+        $headers = @{}
+        if ($GITHUB_TOKEN -ne "OPTIONAL") {
+            $headers["Authorization"] = "token $GITHUB_TOKEN"
+        }
+
+        Invoke-WebRequest -Uri $GITHUB_RAW_URL -UseBasicParsing -TimeoutSec 10 -Headers $headers -OutFile $tempScript
+        Write-Host "  [SETUP] Starte Setup ..." -ForegroundColor Green
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $tempScript
+        exit
+    } catch {
+        Write-Host "  [SETUP] Download fehlgeschlagen: $_" -ForegroundColor Red
+        exit 1
+    }
 }
+
+# StrictMode erst hier aktivieren - nach dem Self-Update-Block
+Set-StrictMode -Version Latest
 
 # ---------------------------------------------------------------------------
 # HILFSFUNKTIONEN
