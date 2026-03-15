@@ -1,5 +1,5 @@
 #Requires -RunAsAdministrator
-<# 
+<#
 .SYNOPSIS
     Windows Entwicklungsumgebung Setup-Skript
 .DESCRIPTION
@@ -19,7 +19,7 @@ $ErrorActionPreference = "Stop"
 # ---------------------------------------------------------------------------
 
 # HIER deine GitHub-URL eintragen:
-$GITHUB_RAW_URL = "https://raw.githubusercontent.com/DEIN-USER/DEIN-REPO/main/setup-windows.ps1"
+$GITHUB_RAW_URL = "https://raw.githubusercontent.com/r0b1nr31nh4rdt/windows-setup-dev-ops/main/setup-windows.ps1"
 
 # Nur updaten wenn das Skript als Datei ausgefuehrt wird (nicht via Invoke-Expression)
 if ($MyInvocation.MyCommand.Path) {
@@ -108,7 +108,7 @@ if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
     Set-ExecutionPolicy Bypass -Scope Process -Force
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
     Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-    
+
     # Profil neu laden damit choco verfuegbar ist
     Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1" -ErrorAction SilentlyContinue
     refreshenv
